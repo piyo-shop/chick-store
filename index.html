@@ -490,6 +490,7 @@ async function makeReceipt(){
   x.fillStyle = ink; let bxp = L + 110; while (bxp < R - 110){ const w = 3 + Math.floor(rnd()*3)*3; if (rnd() > 0.3) x.fillRect(bxp, y, w, 96); bxp += w + 4; }
   y += 150; x.font = F(700,36); x.fillStyle = ink; x.textAlign = "center"; x.fillText("오늘도 수고하셨습니다", Wd/2, y); y += 50;
   x.font = F(400,28); x.fillStyle = soft; x.fillText("내일도 영업합니다 🐣", Wd/2, y); y += 50;
+  x.font = F(700,28); x.fillStyle = "#ff5fb0"; x.fillText("@piyo.ai.shop", Wd/2, y); y += 50;
   const contentH = y;
   // 2) compose: background + paper sized to content, centered
   const c = document.createElement("canvas"); c.width = Wd; c.height = Hd; const o = c.getContext("2d"); o.imageSmoothingEnabled = false;
@@ -502,6 +503,7 @@ async function makeReceipt(){
   const zig = (yy, dir) => { o.beginPath(); o.moveTo(pl, yy); for (let i = 0; i <= pr-pl; i += 30) o.lineTo(pl+i, yy + dir*((i/30)%2 ? 0 : 18)); o.lineTo(pr, yy); o.closePath(); o.fill(); };
   zig(top, -1); zig(bottom, 1);
   o.drawImage(cc, 0, 0, Wd, contentH, ox, top, pw, ph);
+  o.textAlign = "center"; o.font = F(700,30); o.fillStyle = "#ffffff"; o.fillText("병아리 상점가 · @piyo.ai.shop", Wd/2, Hd - 50);
   return c;
 }
 let lastBlob = null;
