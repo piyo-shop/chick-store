@@ -104,6 +104,11 @@ input::placeholder{color:#a3a3b2}
 .stamps span{aspect-ratio:1; border:2px dashed rgba(255,255,255,.4); border-radius:50%; display:grid; place-items:center; font-size:20px}
 .stamps span.on{border:2px solid var(--gold); background:rgba(255,122,182,.22)}
 footer{color:var(--muted); font-size:12px; text-align:center; margin-top:8px}
+.pep{position:relative; margin:0 0 0; padding:5px 10px 6px; text-align:center; font-size:14px; font-weight:700; color:#fff; letter-spacing:.5px;
+  background:repeating-linear-gradient(90deg,#e8507f 0 18px,#f0679a 18px 36px); border-top:3px solid #7a3b1e; text-shadow:1px 1px 0 #9c2a55}
+.pep::before,.pep::after{content:""; position:absolute; bottom:-8px; width:0; height:0; border-top:8px solid #c23d6b}
+.pep::before{left:0; border-right:8px solid transparent}
+.pep::after{right:0; border-left:8px solid transparent}
 .vh{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
 [hidden]{display:none !important}
 .press{transform:scale(.92) !important; filter:brightness(1.3)}
@@ -125,6 +130,7 @@ footer{color:var(--muted); font-size:12px; text-align:center; margin-top:8px}
         <span class="open" aria-hidden="true">OPEN</span>
       </div>
       <div class="band low"></div>
+      <div class="pep" id="pepBand" hidden>🍫 빼빼로데이 이벤트 · 11/13까지</div>
     </div>
     <div class="glass" aria-hidden="true"></div>
   </header>
@@ -195,12 +201,20 @@ footer{color:var(--muted); font-size:12px; text-align:center; margin-top:8px}
 const $ = id => document.getElementById(id);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const DEMO = location.hash === "#demo";
+/* 빼빼로데이 이벤트: 한국 시간 11/11 00:00 ~ 11/13 23:59 자동, #pepero 는 기간과 상관없이 켜고 기록은 저장하지 않아요 */
+const PEPERO_TEST = location.hash === "#pepero";
+const PEPERO = PEPERO_TEST || (() => {
+  const k = new Date(Date.now() + 9*3600e3);
+  const ymd = k.getUTCFullYear()*10000 + (k.getUTCMonth()+1)*100 + k.getUTCDate();
+  return ymd >= 20261111 && ymd <= 20261113;
+})();
+const NOSAVE = DEMO || PEPERO_TEST;
 const KEY = "chick-store-v1";
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 let S = { date: today(), items: [], mood: null, note: "", phase: "shop", seq: 0, no: 0, stampDays: [] };
-if (!DEMO) { try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {} }
+if (!NOSAVE) { try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch(e) {} }
 if (S.date !== today()) { S.date = today(); S.items = []; S.mood = null; S.note = ""; S.phase = "shop"; }
-const save = () => { if (DEMO) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} };
+const save = () => { if (NOSAVE) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {} };
 function el(tag, props = {}, ...kids){
   const e = document.createElement(tag);
   for (const [k,v] of Object.entries(props)){
@@ -344,6 +358,10 @@ function drawCounter(){
   // register
   px(118,48,20,12,"#3b3f4a"); px(120,50,16,5,"#7ef0c0"); px(121,51,6,1,"#1d5b46"); px(118,60,20,1,"#2a2d35");
   for (let i = 0; i < 4; i++) px(121+i*4,56,3,2,"#cfd3da");
+  if (PEPERO){ // pepero box by the scanner
+    px(74,50,14,10,"#e8507f"); px(74,50,14,2,"#f6a3c2"); px(76,53,10,1,"#fff6d8");
+    for (let i = 0; i < 4; i++){ px(76+i*3,45,1,5,"#7a4a2a"); px(76+i*3,48,1,2,"#e2b77a"); }
+  }
   // bag
   px(140,51,9,9,"#d9b886"); px(140,51,9,1,"#bf9b66"); px(142,48,1,3,"#bf9b66"); px(146,48,1,3,"#bf9b66"); px(142,48,5,1,"#bf9b66");
 }
@@ -449,12 +467,60 @@ function chickSprite(scale){
   BODY.forEach((r, ry) => { for (let rx = 0; rx < 16; rx++){ const k = r[rx]; if (k === ".") continue; x.fillStyle = PAL[k]; x.fillRect(rx*scale, ry*scale, scale, scale); } });
   return c;
 }
+const OWNERS = [
+  { name:"피요", role:"오너", src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAsCAYAAAD8WEF4AAAEJElEQVR4nNWYb2gTZxzHv3eLf/ovs1kqrsam6wtbTGEqMraytVjfbOgKw+HA2eqbzUHzQtgYCMUXWugbhSEJDPaHwbYOiwi6VdAXbm6syhRxsAwXWkxsmmjM4jWXXusfPHmeJGfucrk8d7vU9QPJ89w9/z755clzzxMOjKxp6pBJKmZTrE3w6NEDmt5/mOFgAw5W0TbvqzQfnb7O3Lk0nylkZTuEebMNet7Yh2cFjyUEb7bBxd++wbOCxxKCxxKCxxLCwVJp5yubEPjoU8uD+D8/guD4D1gUWUwKwMmw6c7D0Zs0FcLTsANDWa/nZfrUsgNvvq9o7E/LDwfdhnU1btn9wlr4OrbCbkI3fkbq3xnMzadMS3N6oqucHlQbIRMzLVyyGpAOSEf/N1FC2QYkwsW7p9oaN6wizafgcCxXrq2IEpgaDX64jYoHjvVXrjwzpmT9h0M0DY5GbdkiciyiTJIa0WKItB3CfLVFCYFDPgzu9lpeBg/3ddK2XLVF/2uEiWg4nsH6Zqf+Q4FZlFGywMhAHR6IjfIXP97jzIoeOvMXxy2GqBiJqK4/DiZQSVgram3XVb8XvvYDxnXax+HrndAVZUFPtES2YlRnxuBb21hxMF++TjnRY4Mv4oO3G2UzoiWyds5PKxiJqmQNo6oR3djaXHbAQjQ3GtTRi24lUbb9rEY0dKFLXX4DQDInKLbkbl3+2liUkJgSIM3eZxY1lmX52n+NAMIczUYjs8B1wNXHJlqAVbS8bLHoxJ6n+a7v1PW6WxE9PoHbwgK93DDQpttdQ3xIyYfnP1GVsYrqy2ojSgRvDwFrhnXnJ4mkq8IgYvMwGlZ+iXDo3ZIyVlG1bHay/FdfRpSVxJSABEpFCayilo/iZkXtgn4qp7tTdnt6lJsra5sMG511nqept60Vc0e/p/npuIAa/3alTk+sU8lLmpPHshX1Sl5IXoM0O8k2DbSihAXprqHwrXQaLa7cTD2zxQtPfS1iWQldLR5aVoyRKGHV6s0kkVmE2f43KGIuEwdqc8LuU7+jL3+/KS7g1u7XqPRB/s0SSTtwmBYF0C91o7W9F+Oa8qbRS9jZ+z6A6hw4ebOiBSL/XMD2/hOqe91UVE3ywEEkg0exaJHVipph9WcjqOpqkIpdhPz4MVzNr1fsgE6Hb9/DSx1PV4JyiOkQ+OeWFX5U5lcD8pZJ0YVZ2QHlrwkyizALYjqEhaxy/lLGYhUlVKzY4NpQVrjwi0+evoM/rkxhx3AXi6hlmDogwiQtlmZZmsR07k8OO0SZVwMx/TdHXjvWncOdyLkSURLZn4YmVJK72i5RSbtETa2zg2955cB+HwLvkH1Bbm/gH03gq6tO+EckQHweyeOFjXhd/gU5+AvbsdtWWXE6gej5WfW9lISF7D0uOAYMdC6X9crt5AlPLwcFitUcmwAAAABJRU5ErkJggg==",
+    lines:["오늘 하루도 끝까지 해냈군요. 이건 제가 드리는 작은 상입니다.","하루를 잘 닫는 것도 실력입니다. 하나 받아 두세요.","수고 많았습니다. 단 것 하나쯤은 괜찮은 날이에요."] },
+  { name:"삐쿡", role:"생각식당 셰프", src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAiCAYAAADGUiAIAAAC90lEQVR4nNXYUUgTcRwH8O+NcIKZzScz0iHEwutBgkAkeigQetCnCMpavWTgVkT2UpnBknwQIcb2VERUWu4tRhBCIT6MQRC+DMQ0Nm3dEtGN6UpfLv43b+22293/zv+VfUH/d/f/3+7D7/67/TeAYQ432EVYGBsLHGnJ3/GWGkvBNrMnFuNIS/Lp6wa+pDY57Casp/e02Nl9QsIR6IOeaqmV+2BRDFVBhgRGL2mO8/a/BNbnERxPMK3yHpZIKckQArfsAHiyJ53HCs3RQKmQJMmQ6mGvL8YEbLMaShIY5OG50Gx6LouhqHQuZzV0pxUm0MznWdQdO6I+Z6mhlEg5w+4abGUd4pPwGmcUyp1r57i/Ac3G44r9/qAAPXAp1Nxzdu9l8K6b2mNc78CfiqhCaaIGLcPqVjUZAn/QoXsxfntMJeio5wCudjlEI9AyLMv5aSZaUAVWs6ol0DZnY8ULytVs0xijVl09KN0nWAk09rFD2T8LYDkPzDblD0WfaUNJhIU0cplNaqg2lua2T8eB9Ia0mYhngBmgvpsOKocWWhlbDI1c/LPd8Uo57qQTCX8EqfQvabfV3aL6crXfBwrbcz9vK/pooerY0ooSYGoAaBhSnZ+kkvU6F8k2DqG2+inmYmfL+mihSuz6fOVbXwFKG2EhDQHlUBJaqDSW/CPvSvLulFPrdGqeZBSqFd9EGmPTOSowVwqVs/p4P6zKZlfcFFj30bXvzQfV46kfa1SwpW/LhW3XSB8s/6awUySr2P4XqCHsv4aS2Mi6kqwvi+PtXWUCdY30lc3Te7kZ008Dac5uL4QLi4oXi/l9X2sLFZS2mtfthxB+H1FcixZKojnwfM8V8f7gIybQgH8Y4bcTnGVz9vXYc+6h7+6ugJJQvQCpMGmLq0wDDfiHpZYF1PjPR2eaxcWqdnhv3NFFNmUmEZyi+xZLG84INHCNLyy0SbzjAhbrOqXtpq0o1PqDDMHUn2DZJQGJyYzy2EoO4an8LXYfrRLV+lnmN/DRobKtj7gUAAAAAElFTkSuQmCC",
+    lines:["복잡한 생각은 제가 구워 둘게요. 빼빼로는 그냥 드세요!","오늘의 디저트는 빼빼로 한 줄! 맛있게 드세요."] },
+  { name:"삐삐", role:"편의점 점장", src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAiCAYAAADGUiAIAAADIElEQVR4nM3Xb0gTYRwH8O+JpbAWTQj8Q24MUuh84Yt6IxGU0J8X7Y1FYKWvymC+iOxNIAZDkF74prZXRZClkHuX1QuJEjEpejOkUZqOLdEbEWx6urReXDzPvHO33e6eu27aF8Y9d8/z3H347bnbDbAxh6srJJQwZXbgyJZ8jnkdJQWXWZ2YiyNbkk+xdXxLbnL4n7D+663Sad9xiiPQu5cr6VbuQ4liqgoyJDh4VXdcd89TYG0eoZGErVUutxNJszSK4K0KADzZo/PsQnMsUCYkydKo5uHuQNQWcFmpoSTBPh7+drfltRzwNdG5XKmh/1phAp1bXkVD7X7tNcsMZUTKGehw4Lfokh6OpTiz0L4XnzluJ6BiPK7a7wkJMALnQ609Z/d1gm+8qT+m8RX4U9OaUJZoQQuwhlVdGgVf5zK8GL81phh00F+Da+ddkhloAdbO9WklelAVVreqedBmT23RC8rVbNYZo1VdIyjbL1geNPq2Rd3/FcCPLFCszx768FgfSiIspJFZ2WSG6mNZvvbJOJBep81EfAWIAFU+NqgcVmhxbC50+sp2u+WZetwJDxL3p5FMb9DdIx1ezdM5l3uV9tyv26o+Vqg2Nr+iBJjsBar7NdcnqWSVwUXE2n44Kx9hLnqhoI8VqsauzRf/6otAWSMspCGgEErCCiWhA8ldSe5OOU6PR3eSWaheAs/TGJ7MMIG5fKics19eG04e73Ir7cXlLKrtwceCceLirNJ+03rPMtjyf7B0nDyzjCPmQHfkn8JuI01V9n3XhrKNuh2IDnh2HGpqGchg3Di4K1CS8q33StVN1tB/FN42ZRf8HfOvecVCbqa+SwcsPQ3ompXB8sHk1BC3uZqSak76YWdSkTCGYxnVtVihCjYHvH3imTF6UrvAqUgYa7EpziyQec0SsPAuZNWnCS3po0uuMGnnVjl7I53RnxsJ060dUObn7BYY7XUz0pPZQ3A1XzREdtZHEYqx/YtlDfPJ/OfcUrCLV160SbpHBPxpbKftPd9fQqs/NGEfmPkXTFwUkBhfUR/7mcHQRIhiOpr2Slr9duYvW/qunaSIeC0AAAAASUVORK5CYII=",
+    lines:["계산 끝! 이건 서비스예요. 쉿!","오늘 마감한 손님께만 드리는 거예요.","영수증이랑 같이 챙겨 가요. 오늘도 수고했어요!"] },
+  { name:"삐뿅", role:"오락실 사장", src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAiCAYAAADGUiAIAAADCklEQVR4nM3Yb0gTYRwH8N8NScH2YuILW5FDqEX3Rih7IRq1ouiFStArLXtlvdheRIr0QgqGkAhGxNaboheZA/dGxigoaITECkKIYuCW1tZyN2TgjdOZvbl4Tnfdbbe7391u2hfkee6e5+4+/O7P7gQwMUda6nmoYSxm4EhL/jraGmsKthjdUIojLcmn7xvwLbtFwf+Edd84x1/o7RJwBHpvoEFoi2NQo+iqQhHim7qmOs8zPA2wvgT+QMrUKteZiRSyEgTf7XoAoMmSsJ1ZaAoDRSFJVoKKqz3emClgS62hJL67NLj7Ww1fy5nIHV4Vaxa0WjCBjo4GhLauKigCKc39wUb4w9n4J+E1Sg90crIf7K4JitoNKJdMypaH/QxogUuhxp6z+68D7bylPsf5EmhXVBGKiRK0DKtZ1ZUg0Adtmgejd+ZUgk65D8BQj43XAy3Dmnl9GokaVIZVrWoJtN1hr3jAYjXbVeYoVVcLivsFK4HGIp3y8UUAWN0Gcoe3V318pg4lYZZZKOS30FB1LOa0zycB2A2hm0rmAT4DNPXioMVgoZWxUmj06r9+5wv5vNMOSD2KQpb9LSweH2xT3J01Myb2E5sjsjEsVBlbWlECzI4BtIwrXp+kkk0aB+Hs42BteAqJ2JWyMSxUjl1fqnzqK0CxYZZZYKAcSoKFkggTyV1J7s5irA6H6kZ6oWrxzrIwM19AgalSaDETD15pbvxzlTwKtMPkv4j9xyMPDYMNf4MZge7Kl8JeIw1Vdi+huiorhU6H/Jrzz5/pBrNjIe+V5P1SmrNDJ3VV9PVMBH1A7yxr+GkgVHbnRVh8qVhIP6e4zTX+1CE3CnBxwIWaF8/NwdsfBdmxsFARKwGLSeTCwk6VwImvYcSuu8ugv7gPlF6gNJobHW3uqVhh7I0Ul0CrCWoHBExaKRoDjefmhNYMqP5/H11q5UPv7eBsvqyJ7DuxCP53uK9YbCg9UN9NWnzRJvEEGAgtHBP6fV0ZUBr3mwhGP2e5NAOpN3n5ulxBPMVceh+vNG5m/gLQ3KrCmo1XwQAAAABJRU5ErkJggg==",
+    lines:["오늘은 꽝 없음! 무조건 당첨이에요!","코인 대신 빼빼로 한 개, 받아 가요!"] },
+  { name:"삐별", role:"타로 점집", src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAiCAYAAADGUiAIAAADcElEQVR4nM2YXUgUURTHzy6SQpkoBmqSspAfTZgJvcjag4UQ0T4FgWlGUEEuYSU+hOiyiA+iILFGUIihCPmSGEJISKRIGFhY4rLqtosfu1TQ2qrlQ0yc2Waajzszd8ZZ6A+79+vcvT/+586dmQWwUEdzUllIouxWwGGJn1OO/UkFtpudKIbDEvUuuA1L0V0b/E+wjTfOsDUuJweHoO2X07iSH4MkyZALPIivp14zzn1vEGBrGfqGw5a6nGIJ5OcBWJwOQmm9F2B9BHx3UwGAwRFunlXQNhpQLUiUGJQkt3fBEmC7aVCRtEBRvjYGGmsLTO9lr+s4N9emCer+DZeuXRX6nvUPKNpyacUfKmo37DCCBjZ+QFHeQTIsgn6d03fUjDJy78DjF99tRkHbxj7ZUsymXivtcsVDIVErF79YPWA5qLlz9kADMMVN2jHF48BUzxBA6UQCVcDquro+AszhTN3FmL8xaqA9jblw/UImawRUAWtV2s1KC1QCq+mqDLS8ME91Qd7Nco0Ykrt6oHR3MBnowmSldNwPAF8SgPEjia63/dqgqMhKDHY2d6lBtWFp0v4mBBDb5qrh0CbAB4AsFx0oL1pQdVgx6Ezdv3rlkDTudCGEH8xANPaLax674iD+XPpGq1AP/GyWjNGCkmHljiJgtBUgp4O4P9HJLJ1F4nkdkJ72BAILFxVjtKBS2K1l9dSrgNIqshKDCChBUbSgKC6wLKeObbnl0wz0z2+AEQVCs1Rx/rVXMB8donNWDbQiuwxKnY7E4x+W2UFpew+lp98rrFOSfxYLlgbYRuOqmrNj052KPpfzPlfSOmvEXao3BZIQ9GVoUNI3ugbwyFkvAKvJ09sAnqanhtdU3G4rqjOoQREOP2I5mluIjktgTYASnZ2b3DT8IzzwxOhHSKbsuFe6HrolnfK2GqAYTgvU09sg2Z9mTwMhCC80vo6T5Ree/ALDVGPK5Qp2d3F7lnSB8WDytcDoNpBPSjgOipOitqkUhnsXufrzmtvcUcQLj6YT3fnEhcQOGgEUS3cS7/Beji6/gVTvCRbFp03vSBIrEJoV9qcVoMb/PjpXwE69r9KFHpvuhKqSceh7TfcWSyubEVDfTUZ40Ea5hyMw5T/P1atOTgFpvM9CYOo7WHw1AuEJ6Rkc/7YjpLh8dR9LGrdSfwAf9AFvFgxqogAAAABJRU5ErkJggg==",
+    lines:["카드를 뒤집어 보니… 오늘의 운세는 달콤함이에요.","별이 그러는데, 내일은 오늘보다 조금 가벼울 거래요."] }
+];
+const ownerImgs = PEPERO ? OWNERS.map(o => { const im = new Image(); im.src = o.src; return im; }) : [];
+function pepPick(){ // fixed per receipt so a redraw keeps the same owner
+  const d = S.date.replace(/-/g,""); let h = (S.no * 7919 + +d) % 100003;
+  const oi = h % OWNERS.length; h = Math.floor(h / OWNERS.length);
+  return { oi, li: h % OWNERS[oi].lines.length };
+}
+function wrapText(x, text, maxW){ // prefer a sentence break, else break between words
+  if (x.measureText(text).width <= maxW) return [text];
+  const m = text.match(/^(.+?[.!?…,])\s(.+)$/);
+  if (m && x.measureText(m[1]).width <= maxW && x.measureText(m[2]).width <= maxW) return [m[1], m[2]];
+  const out = []; let line = "";
+  for (const w of text.split(" ")){ const t = line ? line + " " + w : w;
+    if (x.measureText(t).width > maxW && line){ out.push(line); line = w; } else line = t; }
+  if (line) out.push(line); return out;
+}
+async function drawCoupon(x, y, L, R, F){
+  const Wd = L + R, ink = "#2a2a33", soft = "#7a7a88", { oi, li } = pepPick(), o = OWNERS[oi], im = ownerImgs[oi];
+  try { if (!im.complete) await im.decode(); } catch(e) {}
+  // cut line
+  x.fillStyle = "#c9c9d2"; for (let i = L+10; i < R-10; i += 22) x.fillRect(i, y, 12, 3);
+  x.font = F(400,30); x.textAlign = "left"; x.fillStyle = soft; x.fillText("✂", L+6, y + 12); y += 50;
+  // coupon box
+  const bx = L+40, bw = R-L-80, top = y, sc = 6, sw = im.naturalWidth*sc, sh = im.naturalHeight*sc;
+  x.font = F(400,32); const lines = wrapText(x, `“${o.lines[li]}”`, bw - 80);
+  const bh = 280 + sh + lines.length*48;
+  x.fillStyle = "#fff0f5"; x.fillRect(bx, top, bw, bh);
+  x.fillStyle = "#e8507f"; for (let i = bx; i < bx+bw; i += 18){ x.fillRect(i, top, 10, 4); x.fillRect(i, top+bh-4, 10, 4); }
+  for (let j = top; j < top+bh; j += 18){ x.fillRect(bx, j, 4, 10); x.fillRect(bx+bw-4, j, 4, 10); }
+  y = top + 70; x.textAlign = "center"; x.fillStyle = "#c23d6b"; x.font = F(700,44); x.fillText("🍫 빼빼로 쿠폰", Wd/2, y); y += 30;
+  if (im.naturalWidth){ x.imageSmoothingEnabled = false; x.drawImage(im, Wd/2 - sw/2, y, sw, sh); }
+  y += sh + 56;
+  x.font = F(700,32); x.fillStyle = ink; x.fillText(`${o.role} ${o.name}`, Wd/2, y); y += 54;
+  x.font = F(400,32); x.fillStyle = ink; lines.forEach(t => { x.fillText(t, Wd/2, y); y += 48; });
+  y += 10; x.font = F(400,26); x.fillStyle = soft; x.fillText("빼빼로데이 이벤트 · 11/13까지 · 1인 1개", Wd/2, y);
+  return top + bh + 40;
+}
 async function makeReceipt(){
   try { await document.fonts.load('700 40px "Galmuri11"'); await document.fonts.load('400 30px "Galmuri11"'); } catch(e) {}
   const Wd = 1080, Hd = 1920, L = 130, R = Wd - 130, PW = R - L;
   const F = (w,s) => `${w} ${s}px "Galmuri11", "Apple SD Gothic Neo", sans-serif`;
   // 1) draw receipt content on its own tall canvas, measuring as we go
-  const cc = document.createElement("canvas"); cc.width = Wd; cc.height = 3200; const x = cc.getContext("2d"); x.imageSmoothingEnabled = false;
+  const cc = document.createElement("canvas"); cc.width = Wd; cc.height = 4200; const x = cc.getContext("2d"); x.imageSmoothingEnabled = false;
   const ink = "#2a2a33", soft = "#7a7a88", items = S.items.slice(0, 15), lineH = 56;
   let y = 50;
   const spr = chickSprite(7); x.drawImage(spr, Wd/2 - spr.width/2, y); y += spr.height + 40;
@@ -491,12 +557,13 @@ async function makeReceipt(){
   y += 150; x.font = F(700,36); x.fillStyle = ink; x.textAlign = "center"; x.fillText("오늘도 수고하셨습니다", Wd/2, y); y += 50;
   x.font = F(400,28); x.fillStyle = soft; x.fillText("내일도 영업합니다 🐣", Wd/2, y); y += 50;
   x.font = F(700,28); x.fillStyle = "#ff5fb0"; x.fillText("@piyo.ai.shop", Wd/2, y); y += 50;
+  if (PEPERO) y = await drawCoupon(x, y, L, R, F);
   const contentH = y;
   // 2) compose: background + paper sized to content, centered
   const c = document.createElement("canvas"); c.width = Wd; c.height = Hd; const o = c.getContext("2d"); o.imageSmoothingEnabled = false;
   o.fillStyle = "#3a8fe0"; o.fillRect(0,0,Wd,Hd);
   o.fillStyle = "#ff9ccb"; for (let i = 0; i < Wd; i += 40) for (let j = 0; j < Hd; j += 40) if (((i+j)/40)%2===0) o.fillRect(i,j,8,8);
-  const scale = Math.min(1, (Hd - 200) / contentH);
+  const scale = Math.min(1, (Hd - (PEPERO ? 280 : 200)) / contentH);
   const ph = contentH * scale, pw = Wd * scale, ox = (Wd - pw)/2, top = (Hd - ph)/2, pl = ox + L*scale, pr = ox + R*scale, bottom = top + ph;
   o.fillStyle = "rgba(0,0,0,.18)"; o.fillRect(pl+14, top+14, pr-pl, ph);
   o.fillStyle = "#fffef8"; o.fillRect(pl, top, pr-pl, ph);
@@ -518,8 +585,10 @@ async function checkout(){
   lastBlob = await new Promise(r => c.toBlob(r, "image/png"));
   $("rcImg").src = c.toDataURL("image/png");
   S.phase = "done"; save(); render();
-  if (fresh){ setTimeout(() => SFX.stamp(), 200); say(`오늘의 영수증 나왔어요! 스탬프도 하나 찍어 드렸어요. ${balanceLine(sums().bal)}`); }
-  else say(`영수증 다시 뽑아 드렸어요. 스탬프는 하루에 하나만 찍혀요.`);
+  const giver = PEPERO ? OWNERS[pepPick().oi].name : "", jong = giver && (giver.charCodeAt(giver.length-1) - 0xAC00) % 28 > 0;
+  const pepNote = PEPERO ? ` 영수증 아래에 빼빼로 쿠폰도 붙어 나왔어요. 오늘은 ${giver}${jong ? "이" : "가"} 건네줬어요!` : "";
+  if (fresh){ setTimeout(() => SFX.stamp(), 200); say(`오늘의 영수증 나왔어요! 스탬프도 하나 찍어 드렸어요.${pepNote || " " + balanceLine(sums().bal)}`); }
+  else say(`영수증 다시 뽑아 드렸어요. 스탬프는 하루에 하나만 찍혀요.${pepNote}`);
   busy = false;
   if (!DEMO) setTimeout(() => $("pDone").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block:"start" }), 150);
 }
@@ -561,10 +630,11 @@ function render(){
   $("pShop").hidden = done; $("pPay").hidden = done; $("pDone").hidden = !done;
   renderShop(); renderMoods(); $("noteInp").value = S.note || ""; renderStamps();
 }
+if (PEPERO) $("pepBand").hidden = false;
 segInit(); render();
 if (S.phase === "done"){ makeReceipt().then(c => { $("rcImg").src = c.toDataURL("image/png"); c.toBlob(b => lastBlob = b, "image/png"); }); }
 if (!DEMO){
-  if (!S.items.length) say("어서 오세요, 하루 마감 편의점이에요! 오늘 한 일을 하나씩 찍어 주세요.");
+  if (!S.items.length) say(PEPERO ? "어서 오세요! 빼빼로데이 이벤트 중이에요. 하루 마감하면 영수증 아래에 빼빼로 쿠폰이 붙어 나와요." : "어서 오세요, 하루 마감 편의점이에요! 오늘 한 일을 하나씩 찍어 주세요.");
   else if (S.phase === "done") say("오늘의 영수증이에요. 저장해서 간직하세요.");
   else say("아까 담던 장바구니 그대로 있어요. 이어서 찍어 주세요.");
 }
